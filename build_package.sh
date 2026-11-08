@@ -27,6 +27,10 @@ echo "   Plugin: ${PLUGIN_NAME}"
 echo "   Version: ${VERSION}"
 echo ""
 
+echo "generating requirements.txt..."
+
+uv export --no-hashes --format requirements-txt -q -o requirements.txt
+
 # Clean up previous builds
 rm -rf "$TEMP_DIR" "$OUTPUT_FILE"
 mkdir -p "$TEMP_DIR"
