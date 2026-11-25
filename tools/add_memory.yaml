@@ -10,27 +10,25 @@ description:
     zh_Hans: 根据用户交互智能管理 Mem0 中的记忆，包括添加、更新或删除
   llm: Use this tool to intelligently manage memories in Mem0. It can add new memories, update existing ones, or delete outdated information based on user-assistant interactions. Mem0 will automatically determine whether to add, update, or delete memories based on the context.
 parameters:
-  - name: user
+  - name: messages
     type: string
     required: true
     label:
-      en_US: User Message
-      zh_Hans: 用户消息
+      en_US: Messages (JSON)
+      zh_Hans: 消息列表（JSON）
     human_description:
-      en_US: The message from the user in the conversation.
-      zh_Hans: 对话中的用户消息。
-    llm_description: The message from the user in the conversation.
-    form: llm
-  - name: assistant
-    type: string
-    required: false
-    label:
-      en_US: Assistant Response
-      zh_Hans: 助手回应
-    human_description:
-      en_US: Optional. The response from the assistant in the conversation. Leave empty if not applicable.
-      zh_Hans: 可选。对话中的助手回应。如果不适用请留空。
-    llm_description: Optional assistant response in the conversation. Only provide if there is a distinct assistant reply to remember. Leave empty otherwise.
+      en_US: >-
+        A JSON array of two-string tuples in conversation order. The first string must be
+        "user" or "assistant"; the second string is the message content.
+        Example: [["user","Hi"],["assistant","Hello"]]
+      zh_Hans: >-
+        按原始顺序排列的对话消息，使用JSON数组格式。每条消息由两个字符串组成的数组表示：
+        第一项是角色（只能是"user"或"assistant"），第二项是消息内容。
+        例如 [["user","Hi"],["assistant","Hello"]]
+    llm_description: >-
+      A JSON array of two-string tuples in conversation order. The first string must be
+      "user" or "assistant"; the second string is the message content.
+      Example: [["user","Hi"],["assistant","Hello"]]
     form: llm
   - name: user_id
     type: string

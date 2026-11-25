@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -36,21 +37,42 @@ logger = get_logger(__name__)
 
 
 class AddMemoryTool(Tool):
-    """Tool to add user/assistant messages as a memory."""
+    """Tool to add an ordered list of conversation messages as a memory."""
 
     def _build_messages(
         self,
         tool_parameters: dict[str, Any],
     ) -> list[dict[str, str]]:
-        """Build messages list from user and assistant text."""
-        user_text = (tool_parameters.get("user") or "").strip()
-        assistant_text = (tool_parameters.get("assistant") or "").strip()
+        """Normalize user-supplied messages without changing their order."""
+        raw_messages = tool_parameters.get("messages")
+        if raw_messages is None or raw_messages == "":
+            return []
 
-        messages = []
-        if user_text:
-            messages.append({"role": "user", "content": user_text})
-        if assistant_text and assistant_text != user_text:
-            messages.append({"role": "assistant", "content": assistant_text})
+        if isinstance(raw_messages, str):
+            try:
+                raw_messages = json.loads(raw_messages)
+            except json.JSONDecodeError as exc:
+                raise ValueError("messages must be valid JSON") from exc
+
+        if not isinstance(raw_messages, list | tuple):
+            raise ValueError("messages must be a JSON array")
+
+        messages: list[dict[str, str]] = []
+        for index, item in enumerate(raw_messages):
+            if (
+                not isinstance(item, list | tuple)
+                or len(item) != 2
+                or not isinstance(item[0], str)
+                or not isinstance(item[1], str)
+                or item[0] not in {"user", "assistant"}
+            ):
+                raise ValueError(
+                    f"messages[{index}] must be a two-string tuple "
+                    'with role "user" or "assistant"'
+                )
+            role, content = item[0], item[1].strip()
+            if content:
+                messages.append({"role": role, "content": content})
         return messages
 
     def _build_payload(
@@ -190,11 +212,11 @@ class AddMemoryTool(Tool):
             )
             return
 
-        # Build messages and payload
-        messages = self._build_messages(tool_parameters)
-        payload = self._build_payload(messages, user_id, tool_parameters)
-
         try:
+            # Build messages and payload
+            messages = self._build_messages(tool_parameters)
+            payload = self._build_payload(messages, user_id, tool_parameters)
+
             # Skip when no messages prepared or only blank content
             if self._should_skip(messages):
                 logger.debug(
